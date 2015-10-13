@@ -1,0 +1,29 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" dir="ltr" lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>Payment recall for your order : {config key="url_site"} </title>
+</head>
+<body>
+<div id="wrapper">
+    <div id="entete">
+        <h1 id="logotexte">{config key="store_name"}</h1>
+
+        <h2 id="info">Payment recall for your order</h2>
+
+        <h3 id="commande">N&deg; {$order_ref}</h3>
+    </div>
+    <p>
+        Dear Customer,<br/>
+        Nous avons bien reçu votre commande sur notre site {config key="store_name"} et vous en remercions.<br/>
+        Cependant, cette commande est non réglée car votre règlement par carte n'a pas abouti.<br/>
+        Nous ne pouvons donc la traiter.
+    </p>
+    <p>Si vous souhaitez maintenir cette commande, nous vous conseillons de cliquer sur le lien ci-dessous afin de valider votre règlement par carte bancaire.</p>
+    <a href="{$recall_url}?customer_id={$customer_id}&order_id={$order_id}">Votre commande</a>
+    <p>Dès réception de votre paiement, nous traitons votre commande pour expédition au plus vite.</p>
+    Cordialement<br/>
+    <p>L'équipe {config key="store_name"}</p>
+</body>
+</html>

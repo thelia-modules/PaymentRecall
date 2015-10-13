@@ -1,0 +1,21 @@
+{loop type="paymentrecall.order" name="paymentrecall_order" order_id={$ID}}
+    <div class="title title-without-tabs clearfix">
+        <p>{intl l="Payment recall" d="paymentrecall.ai"}</p>
+    </div>
+{if $RECALL_SEND !== true}
+    {form name="paymentrecall.manual.send.recall"}
+        <form method="POST" action="{url path="/admin/module/paymentrecall/manual/send"}">
+
+            {form_hidden_fields form=$form}
+
+            {form_field form=$form field="order_id"}
+                <input type="hidden" name="{$name}" value="{$ID}"/>
+            {/form_field}
+            {intl l="The payment for this order has fail and no mail has been send yet :" d="paymentrecall.ai"}
+            <button class="btn btn-primary btn-xs" type="submit">{intl l="Send mail recall" d="paymentrecall.ai"}</button>
+        </form>
+    {/form}
+{else}
+    {intl l="A recall mail for this order has been send" d="paymentrecall.ai"}
+{/if}
+{/loop}

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<database defaultIdMethod="native" name="thelia" namespace="PaymentRecall\Model">
+    <table name="payment_recall_order">
+        <column name="id" primaryKey="true" autoIncrement="true" required="true" type="INTEGER" />
+        <column name="order_id" required="true" type="INTEGER" />
+        <column name="customer_id" required="true" type="INTEGER" />
+        <column name="recall_send" required="true" type="BOOLEAN" />
+
+        <foreign-key foreignTable="order" name="fk_paymentrecall_order_order" onDelete="RESTRICT" onUpdate="RESTRICT">
+            <reference foreign="id" local="order_id" />
+        </foreign-key>
+
+        <foreign-key foreignTable="customer" name="fk_paymentrecall_order_customer" onDelete="RESTRICT" onUpdate="RESTRICT">
+            <reference foreign="id" local="customer_id" />
+        </foreign-key>
+    </table>
+
+    <table name="payment_recall_module">
+        <column name="id" primaryKey="true" autoIncrement="true" required="true" type="INTEGER" />
+        <column name="module_id" required="true" type="INTEGER" />
+        <column name="enable" required="true" type="BOOLEAN" />
+
+        <foreign-key foreignTable="module" name="fk_paymentrecall_module_module" onDelete="RESTRICT" onUpdate="RESTRICT">
+            <reference foreign="id" local="module_id" />
+        </foreign-key>
+
+    </table>
+
+    <external-schema filename="local/config/schema.xml" referenceOnly="true" />
+</database>

@@ -1,0 +1,9 @@
+Cher Client,
+Nous avons bien reçu votre commande sur notre site {config key="store_name"} et vous en remercions.
+Cependant, cette commande est non réglée car votre règlement par carte n'a pas abouti.
+Nous ne pouvons donc la traiter.
+Si vous souhaitez maintenir cette commande, nous vous conseillons de cliquer sur le lien ci-dessous afin de valider votre règlement par carte bancaire.
+Votre commande: {$recall_url}?customer_id={$customer_id}&order_id={$order_id}"
+Dès réception de votre paiement, nous traitons votre commande pour expédition au plus vite.
+Cordialement
+L'équipe de {config key="store_name"}

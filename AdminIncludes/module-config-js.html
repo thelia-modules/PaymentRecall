@@ -1,0 +1,28 @@
+{javascripts file='assets/js/bootstrap-switch/bootstrap-switch.js'}
+    <script src='{$asset_url}'></script>
+{/javascripts}
+
+
+<script>
+    $(document).ready(function() {
+        $(".packpromo-module-activation").bootstrapSwitch();
+
+        var checkbox = $(this);
+        var url_toggle = "{url path="/admin/module/paymentrecall/toggle/module/"}";
+
+        $(".packpromo-module-activation").on("switch-change", function(e, data) {
+            var is_enable = data.value;
+            $('body').append('<div class="modal-backdrop fade in" id="loading-event"><div class="loading"></div></div>');
+            $.ajax({
+                method: "POST",
+                url: url_toggle + $(this).data("id"),
+                data: { enable : is_enable }
+            }).done(function(){
+                $("#loading-event").remove();
+            }).fail(function(){
+                $("#loading-event").remove();
+                checkbox.bootstrapSwitch('toggleState', true);
+            });
+        });
+    });
+</script>

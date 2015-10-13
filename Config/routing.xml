@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<routes xmlns="http://symfony.com/schema/routing"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/routing http://symfony.com/schema/routing/routing-1.0.xsd">
+
+    <!--
+
+    if a /admin/module/paymentrecall/ route is provided, a "Configuration" button will be displayed
+    for the module in the module list. Clicking this button will invoke this route.
+
+    <route id="my_route_id" path="/admin/module/paymentrecall">
+        <default key="_controller">PaymentRecall\Full\Class\Name\Of\YourConfigurationController::methodName</default>
+    </route>
+
+    <route id="my_route_id" path="/admin/module/paymentrecall/route-name">
+        <default key="_controller">PaymentRecall\Full\Class\Name\Of\YourAdminController::methodName</default>
+    </route>
+
+    <route id="my_route_id" path="/my/route/name">
+        <default key="_controller">PaymentRecall\Full\Class\Name\Of\YourOtherController::methodName</default>
+    </route>
+
+    ...add as many routes as required.
+
+    <route>
+    ...
+    </route>
+    -->
+
+
+    <route id="payment_recall.configuration" path="/admin/module/paymentrecall/configuration">
+        <default key="_controller">PaymentRecall\Controller\Admin\PaymentRecallConfigurationController::configuration</default>
+    </route>
+
+    <route id="payment_recall.toggle.module" path="/admin/module/paymentrecall/toggle/module/{id}">
+        <default key="_controller">PaymentRecall\Controller\Admin\PaymentRecallConfigurationController::toggleModule</default>
+    </route>
+
+    <route id="payment_recall.retry" path="/order/retry/payment">
+        <default key="_controller">PaymentRecall\Controller\Front\OrderController::retryPayment</default>
+    </route>
+
+    <route id="payment_recall.manual.send" path="/admin/module/paymentrecall/manual/send">
+        <default key="_controller">PaymentRecall\Controller\Admin\PaymentRecallController::manualRecallSend</default>
+    </route>
+</routes>

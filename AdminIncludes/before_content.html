@@ -1,0 +1,9 @@
+<div class="container">
+    <div class="row">
+        {if "error" === $smarty.get.recall_alert && null !== $smarty.get.error_message}
+            <div class="alert alert-danger col-md-12" role="alert">{$smarty.get.error_message}</div>
+        {elseif "success" === $smarty.get.recall_alert}
+            <div class="alert alert-info col-md-12" role="alert">{intl l="Recall mail has been send with success" d="paymentrecall.ai"}</div>
+        {/if}
+    </div>
+</div>
