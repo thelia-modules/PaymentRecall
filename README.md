@@ -14,7 +14,7 @@ Require it by adding the following lines to your `composer.json`
 
 ```json
 "require": {
-    "thelia/paymentrecall-module": "1.0"
+    "thelia/payment-recall-module": "1.0"
 }
 ```
 

@@ -14,6 +14,7 @@ use Thelia\Command\ContainerAwareCommand;
 use Thelia\Core\HttpFoundation\Request;
 use Thelia\Core\HttpFoundation\Session\Session;
 use Thelia\Log\Tlog;
+use Thelia\Model\ConfigQuery;
 use Thelia\Model\OrderQuery;
 
 class CronSendMail extends ContainerAwareCommand
