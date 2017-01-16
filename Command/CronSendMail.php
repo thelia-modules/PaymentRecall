@@ -43,7 +43,9 @@ class CronSendMail extends ContainerAwareCommand
 
         $container = $this->getContainer();
         $container->set("request", $request);
-        $container->enterScope("request");
+        if (ConfigQuery::read('thelia_minus_version') < 3) {
+            $container->enterScope("request");
+        }
 
         //Get order for who no mail was sent
         $paymentRecallOrderNotSend = PaymentRecallOrderQuery::create()
