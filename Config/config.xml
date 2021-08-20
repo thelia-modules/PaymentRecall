@@ -16,15 +16,15 @@
         <!--
         <form name="MyFormName" class="PaymentRecall\Form\MySuperForm" />
         -->
-        <form name="paymentrecall.configuration" class="PaymentRecall\Form\ConfigurationForm" />
-        <form name="paymentrecall.manual.send.recall" class="PaymentRecall\Form\ManualSendRecallForm" />
+        <form name="paymentrecall_configuration" class="PaymentRecall\Form\ConfigurationForm" />
+        <form name="paymentrecall_manual_send_recall" class="PaymentRecall\Form\ManualSendRecallForm" />
     </forms>
 
-    <commands>
+    <!--<commands>
         <command class="PaymentRecall\Command\CronSendMail" />
-    </commands>
+    </commands>-->
 
-    <services>
+    <!--<services>
         <service id="paymentrecall.order" class="PaymentRecall\EventListeners\OrderListener" scope="request">
             <argument type="service" id="request"/>
             <tag name="kernel.event_subscriber"/>
@@ -35,16 +35,18 @@
             <argument type="service" id="mailer"/>
             <tag name="kernel.event_subscriber"/>
         </service>
-    </services>
+    </services>-->
 
 
-    <!--
+
     <hooks>
-        <hook id="paymentrecall.hook" class="PaymentRecall\Hook\MySuperHook" scope="request">
-            <tag name="hook.event_listener" event="main.body.bottom" type="front|back|pdf|email" method="onMainBodyBottom" />
+        <hook id="paymentrecall.hook" class="PaymentRecall\Hook\BackHook" scope="request">
+            <tag name="hook.event_listener" event="module.configuration" type="back" templates="render:module_configuration.html" />
+            <tag name="hook.event_listener" event="module.config-js" type="back" method="onModuleConfigJs" />
+            <tag name="hook.event_listener" event="order.tab-content" type="back" method="onOrderEdit" />
         </hook>
     </hooks>
-    -->
+
 
     <!--
     <exports>

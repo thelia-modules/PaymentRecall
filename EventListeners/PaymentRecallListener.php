@@ -7,9 +7,11 @@ use PaymentRecall\Event\PaymentRecallEvent;
 use PaymentRecall\Event\PaymentRecallEvents;
 use PaymentRecall\Model\PaymentRecallOrderQuery;
 use PaymentRecall\PaymentRecall;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Thelia\Core\Event\Order\OrderEvent;
 use Thelia\Core\Event\TheliaEvents;
+use Thelia\Core\Template\ParserContext;
 use Thelia\Core\Template\ParserInterface;
 use Thelia\Log\Tlog;
 use Thelia\Mailer\MailerFactory;
@@ -20,11 +22,15 @@ use Thelia\Tools\URL;
 
 class PaymentRecallListener implements EventSubscriberInterface
 {
+    protected $parser;
+    protected $mailer;
+    protected $dispatcher;
 
-    public function __construct(ParserInterface $parser, MailerFactory $mailer)
+    public function __construct(ParserInterface $parser, MailerFactory $mailer, EventDispatcherInterface $dispatcher)
     {
         $this->parser = $parser;
         $this->mailer = $mailer;
+        $this->dispatcher = $dispatcher;
     }
 
     /**
@@ -78,7 +84,7 @@ class PaymentRecallListener implements EventSubscriberInterface
             $cancelStatus = OrderStatusQuery::create()->findOneByCode(PaymentRecall::CANCEL_STATUS);
             $orderEvent = new OrderEvent($order);
             $orderEvent->setStatus($cancelStatus->getId());
-            $event->getDispatcher()->dispatch(TheliaEvents::ORDER_UPDATE_STATUS, $orderEvent);
+            $this->dispatcher->dispatch($orderEvent, TheliaEvents::ORDER_UPDATE_STATUS);
 
 
             PaymentRecallOrderQuery::create()

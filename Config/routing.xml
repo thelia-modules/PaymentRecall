@@ -29,7 +29,7 @@
     -->
 
 
-    <route id="payment_recall.configuration" path="/admin/module/paymentrecall/configuration">
+    <!--<route id="payment_recall.configuration" path="/admin/module/paymentrecall/configuration">
         <default key="_controller">PaymentRecall\Controller\Admin\PaymentRecallConfigurationController::configuration</default>
     </route>
 
@@ -43,5 +43,5 @@
 
     <route id="payment_recall.manual.send" path="/admin/module/paymentrecall/manual/send">
         <default key="_controller">PaymentRecall\Controller\Admin\PaymentRecallController::manualRecallSend</default>
-    </route>
+    </route>-->
 </routes>

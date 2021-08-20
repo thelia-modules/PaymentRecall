@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<database defaultIdMethod="native" name="thelia" namespace="PaymentRecall\Model">
+<database defaultIdMethod="native" name="TheliaMain" namespace="PaymentRecall\Model">
     <table name="payment_recall_order">
         <column name="id" primaryKey="true" autoIncrement="true" required="true" type="INTEGER" />
         <column name="order_id" required="true" type="INTEGER" />

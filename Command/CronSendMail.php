@@ -7,8 +7,13 @@ use PaymentRecall\Event\PaymentRecallEvents;
 use PaymentRecall\Model\PaymentRecallOrder;
 use PaymentRecall\Model\PaymentRecallOrderQuery;
 use PaymentRecall\PaymentRecall;
+use PaymentRecall\Service\PaymentRecallDispatchService;
+use Psr\Container\ContainerInterface;
+use Symfony\Bundle\FrameworkBundle\Command\EventDispatcherDebugCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 use Thelia\Command\ContainerAwareCommand;
 use Thelia\Core\HttpFoundation\Request;
@@ -32,18 +37,21 @@ class CronSendMail extends ContainerAwareCommand
         Tlog::getInstance()->info('Checking recorded orders...');
 
         $this->checkOrders($output);
+        return 0;
     }
 
     protected function checkOrders(OutputInterface $output)
     {
         $timeBeforeMail = PaymentRecall::getConfigValue('time_before_mail', 20);
+        $container = $this->getContainer();
 
         //Create fake session for sending mail
         $request = new Request();
         $request->setSession(new Session(new MockArraySessionStorage()));
+        $requestStack = $container->get('request_stack');
+        $requestStack->push($request);
 
-        $container = $this->getContainer();
-        $container->set("request", $request);
+//        $container->services['request_stack'] = $requestStack;
         if (ConfigQuery::read('thelia_minus_version') < 3) {
             $container->enterScope("request");
         }
@@ -87,7 +95,7 @@ class CronSendMail extends ContainerAwareCommand
 
                             //Dispatch the event who gonna send email
                             try {
-                                $dispatcher->dispatch(PaymentRecallEvents::SEND_PAYMENT_RECALL, $paymentRecallEvent);
+                                $dispatcher->dispatch($paymentRecallEvent, PaymentRecallEvents::SEND_PAYMENT_RECALL);
                             } catch (\Exception $e) {
                                 Tlog::getInstance()->error('Error while sending the mail for : '.$order->getRef().' message : '.$e->getMessage());
                             }

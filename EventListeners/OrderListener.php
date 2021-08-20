@@ -5,9 +5,10 @@ namespace PaymentRecall\EventListeners;
 use PaymentRecall\Model\Base\PaymentRecallModuleQuery;
 use PaymentRecall\Model\PaymentRecallOrderQuery;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Thelia\Core\Event\Order\OrderEvent;
 use Thelia\Core\Event\TheliaEvents;
-use Thelia\Core\HttpFoundation\Request;
+use Thelia\Model\Event\OrderEvent as OrderModelEvent;
 use Thelia\Model\OrderAddressQuery;
 use Thelia\Model\OrderQuery;
 
@@ -15,14 +16,14 @@ class OrderListener implements EventSubscriberInterface
 {
     protected $request;
 
-    public function __construct(Request $request)
+    public function __construct(RequestStack $requestStack)
     {
-        $this->request = $request;
+        $this->request = $requestStack->getCurrentRequest();
     }
 
-    public function recordOrder(OrderEvent $event)
+    public function recordOrder(OrderModelEvent $event)
     {
-        $order = $event->getOrder();
+        $order = $event->getModel();
 
         $paymentModuleId = $order->getPaymentModuleId();
 
@@ -39,6 +40,7 @@ class OrderListener implements EventSubscriberInterface
             $record->setOrderId($order->getId())
                 ->setRecallSend(false)
                 ->save();
+
         }
     }
 
@@ -60,7 +62,7 @@ class OrderListener implements EventSubscriberInterface
         $oldDeliveryAddress = OrderAddressQuery::create()
             ->findPk($oldOrder->getDeliveryOrderAddressId());
         $updateDelivery = OrderAddressQuery::create()
-            ->findPk($event->getOrder()->getDeliveryOrderAddressId())
+            ->findPk($event->getModel()->getDeliveryOrderAddressId())
             ->setCompany($oldDeliveryAddress->getCompany())
             ->setAddress1($oldDeliveryAddress->getAddress1())
             ->setAddress2($oldDeliveryAddress->getAddress2())
@@ -73,7 +75,7 @@ class OrderListener implements EventSubscriberInterface
         $oldInvoiceAddress = OrderAddressQuery::create()
             ->findPk($oldOrder->getInvoiceOrderAddressId());
         $updateInvoice = OrderAddressQuery::create()
-            ->findPk($event->getOrder()->getInvoiceOrderAddressId())
+            ->findPk($event->getModel()->getInvoiceOrderAddressId())
             ->setCompany($oldInvoiceAddress->getCompany())
             ->setAddress1($oldInvoiceAddress->getAddress1())
             ->setAddress2($oldInvoiceAddress->getAddress2())
@@ -89,7 +91,7 @@ class OrderListener implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            TheliaEvents::ORDER_AFTER_CREATE => ["recordOrder"],
+            OrderModelEvent::POST_INSERT => ["recordOrder"],
             TheliaEvents::ORDER_BEFORE_PAYMENT => ["updateOrderAddresses"]
         ];
     }
