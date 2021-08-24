@@ -3,8 +3,13 @@
 namespace PaymentRecall\Controller\Front;
 
 use PaymentRecall\PaymentRecall;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Thelia\Core\Event\Cart\CartEvent;
 use Thelia\Core\Event\TheliaEvents;
+use Thelia\Core\Security\SecurityContext;
+use Thelia\Core\Translation\Translator;
 use Thelia\Model\AreaDeliveryModuleQuery;
 use Thelia\Model\Cart;
 use Thelia\Model\ConfigQuery;
@@ -13,24 +18,32 @@ use Thelia\Model\OrderPostage;
 use Thelia\Model\OrderQuery;
 use Thelia\Model\ProductQuery;
 use \Front\Controller\OrderController as BaseOrderController;
+use Symfony\Component\Routing\Annotation\Route;
 
+/**
+ * @Route("/order/retry/payment", name="payment_recall_retry")
+ */
 class OrderController extends BaseOrderController
 {
     protected $useFallbackTemplate = true;
 
-    public function retryPayment()
+    /**
+     * @Route("", name="", methods="POST")
+     */
+    public function retryPayment(RequestStack $requestStack, SecurityContext $securityContext, EventDispatcherInterface $dispatcher)
     {
-        $customerId = $this->getRequest()->get("customer_id");
-        $orderId = $this->getRequest()->get("order_id");
+        $request = $requestStack->getCurrentRequest();
+        $customerId = $request->get("customer_id");
+        $orderId = $request->get("order_id");
 
-        $loggedCustomer = $this->getSecurityContext()->getCustomerUser();
+        $loggedCustomer = $securityContext->getCustomerUser();
 
         //If cutomer not logged or not same as in order send him to login page
         if ($loggedCustomer === null) {
-            return $this->render("custom-recall-login", ["redirect" => $this->getRequest()->getRequestUri()]);
+            return $this->render("custom-recall-login", ["redirect" => $request->getRequestUri()]);
         } elseif ($loggedCustomer->getId() != $customerId) {
             $this->dispatch(TheliaEvents::CUSTOMER_LOGOUT);
-            return $this->render("custom-recall-login", ["redirect" => $this->getRequest()->getRequestUri()]);
+            return $this->render("custom-recall-login", ["redirect" => $request->getRequestUri()]);
         }
 
         //Rebuild new order from order id in link
@@ -38,13 +51,13 @@ class OrderController extends BaseOrderController
             $order = OrderQuery::create()->findOneById($orderId);
 
             //Fill cart with old order product
-            $cart = $this->setCart($order);
+            $cart = $this->setCart($order, $request, $dispatcher);
 
             $orderStatusCode = $order->getOrderStatus()->getCode();
 
             if ($orderStatusCode !== PaymentRecall::CANCEL_STATUS && $orderStatusCode !== PaymentRecall::NOT_PAID_STATUS) {
                 throw new \Exception(
-                    $this->getTranslator()->trans(
+                    Translator::getInstance()->trans(
                         "This order has already been paid, you can only retry payment for non paid order.",
                         [],
                         PaymentRecall::MODULE_DOMAIN
@@ -61,10 +74,10 @@ class OrderController extends BaseOrderController
             * (their will be replaced after order has been created by old order address)
             * And set delivery and payment module
             */
-            $this->setDelivery($order);
-            $this->setInvoice($order);
+            $this->setDelivery($order, $dispatcher);
+            $this->setInvoice($order, $request, $dispatcher, $securityContext);
 
-            $this->getSession()->set('payment_retry_order_id', $orderId);
+            $request->getSession()->set('payment_retry_order_id', $orderId);
 
             /* check stock not empty */
             if (true === ConfigQuery::checkAvailableStock()) {
@@ -81,7 +94,7 @@ class OrderController extends BaseOrderController
 
             $paymentOrderEvent = $this->getOrderEvent();
 
-            $this->getDispatcher()->dispatch(TheliaEvents::ORDER_PAY, $paymentOrderEvent);
+           $dispatcher->dispatch($paymentOrderEvent, TheliaEvents::ORDER_PAY);
 
             $placedOrder = $paymentOrderEvent->getPlacedOrder();
 
@@ -114,11 +127,11 @@ class OrderController extends BaseOrderController
         }
     }
 
-    protected function setCart(Order $order)
+    protected function setCart(Order $order, Request $request, EventDispatcherInterface $dispatcher)
     {
         $orderProducts = $order->getOrderProducts();
 
-        $cart = $this->getSession()->getSessionCart($this->getDispatcher());
+        $cart = $request->getSession()->getSessionCart($dispatcher);
         $cartItems = $cart->getCartItemsJoinProductSaleElements();
 
         //Delete items in cart
@@ -126,7 +139,7 @@ class OrderController extends BaseOrderController
             $cartDelete = new Cart();
             $cartDelete->addCartItem($cartItem);
             $cartEvent = new CartEvent($cartDelete);
-            $this->dispatch(TheliaEvents::CART_DELETEITEM, $cartEvent);
+            $dispatcher->dispatch($cartEvent, TheliaEvents::CART_DELETEITEM);
         }
 
         $cart->clearCartItems();
@@ -143,7 +156,7 @@ class OrderController extends BaseOrderController
             $newCartEvent->setNewness(1);
             $newCartEvent->setProductSaleElementsId($orderProduct->getProductSaleElementsId());
 
-            $this->dispatch(TheliaEvents::CART_ADDITEM, $newCartEvent);
+            $dispatcher->dispatch($newCartEvent, TheliaEvents::CART_ADDITEM);
 
             $orderProductsArray[] = $orderProduct;
         }
@@ -151,9 +164,9 @@ class OrderController extends BaseOrderController
         return $cart;
     }
 
-    protected function setDelivery(Order $order)
+    protected function setDelivery(Order $order, EventDispatcherInterface $dispatcher)
     {
-        $this->checkCartNotEmpty();
+        $this->checkCartNotEmpty($dispatcher);
         //Set default customer address as temp delivery address (changed before payment by old order address)
         $deliveryTempAddress = $order->getCustomer()->getDefaultAddress();
         $deliveryModule = $order->getModuleRelatedByDeliveryModuleId();
@@ -164,7 +177,7 @@ class OrderController extends BaseOrderController
                 ->filterByDeliveryModuleId($deliveryModule->getId())
                 ->count() == 0) {
             throw new \Exception(
-                $this->getTranslator()->trans(
+                Translator::getInstance()->trans(
                     "Delivery module cannot be use with selected delivery address",
                     [],
                     PaymentRecall::MODULE_DOMAIN
@@ -186,14 +199,14 @@ class OrderController extends BaseOrderController
         $orderDeliveryEvent->setPostageTax($postage->getAmountTax());
         $orderDeliveryEvent->setPostageTaxRuleTitle($postage->getTaxRuleTitle());
 
-        $this->getDispatcher()->dispatch(TheliaEvents::ORDER_SET_DELIVERY_ADDRESS, $orderDeliveryEvent);
-        $this->getDispatcher()->dispatch(TheliaEvents::ORDER_SET_DELIVERY_MODULE, $orderDeliveryEvent);
-        $this->getDispatcher()->dispatch(TheliaEvents::ORDER_SET_POSTAGE, $orderDeliveryEvent);
+        $dispatcher->dispatch($orderDeliveryEvent, TheliaEvents::ORDER_SET_DELIVERY_ADDRESS);
+        $dispatcher->dispatch($orderDeliveryEvent, TheliaEvents::ORDER_SET_DELIVERY_MODULE);
+        $dispatcher->dispatch($orderDeliveryEvent, TheliaEvents::ORDER_SET_POSTAGE);
 
         return $orderDeliveryEvent->getDeliveryAddress();
     }
 
-    protected function setInvoice(Order $order)
+    protected function setInvoice(Order $order, Request $request, EventDispatcherInterface $dispatcher, SecurityContext $securityContext)
     {
         $this->checkValidDelivery();
 
@@ -202,9 +215,9 @@ class OrderController extends BaseOrderController
         $paymentModule = $order->getModuleRelatedByPaymentModuleId();
 
         /* check that the invoice address belongs to the current customer */
-        if ($invoiceTempAddress->getCustomerId() !== $this->getSecurityContext()->getCustomerUser()->getId()) {
+        if ($invoiceTempAddress->getCustomerId() !== $securityContext->getCustomerUser()->getId()) {
             throw new \Exception(
-                $this->getTranslator()->trans(
+                Translator::getInstance()->trans(
                     "Invoice address does not belong to the current customer",
                     [],
                     PaymentRecall::MODULE_DOMAIN
@@ -216,17 +229,17 @@ class OrderController extends BaseOrderController
         $invoiceOrderEvent->setInvoiceAddress($invoiceTempAddress->getId());
         $invoiceOrderEvent->setPaymentModule($paymentModule->getId());
 
-        $this->getDispatcher()->dispatch(TheliaEvents::ORDER_SET_INVOICE_ADDRESS, $invoiceOrderEvent);
-        $this->getDispatcher()->dispatch(TheliaEvents::ORDER_SET_PAYMENT_MODULE, $invoiceOrderEvent);
+        $dispatcher->dispatch($invoiceOrderEvent, TheliaEvents::ORDER_SET_INVOICE_ADDRESS);
+        $dispatcher->dispatch($invoiceOrderEvent, TheliaEvents::ORDER_SET_PAYMENT_MODULE, );
 
-        $this->getSession()->setOrder($invoiceOrderEvent->getOrder());
+        $request->getSession()->setOrder($invoiceOrderEvent->getOrder());
 
         return $invoiceOrderEvent->getInvoiceAddress();
     }
 
-    protected function checkStockNotEmpty()
+    protected function checkStockNotEmpty(Request $request, EventDispatcherInterface $dispatcher)
     {
-        $cart = $this->getSession()->getSessionCart($this->getDispatcher());
+        $cart = $request->getSession()->getSessionCart($dispatcher);
         $cartItems = $cart->getCartItems();
         $flagQuantity = 0;
         foreach ($cartItems as $cartItem) {

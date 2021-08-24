@@ -13,6 +13,7 @@
 namespace PaymentRecall;
 
 use Propel\Runtime\Connection\ConnectionInterface;
+use Symfony\Component\DependencyInjection\Loader\Configurator\ServicesConfigurator;
 use Thelia\Install\Database;
 use Thelia\Model\Message;
 use Thelia\Model\MessageQuery;
@@ -28,7 +29,7 @@ class PaymentRecall extends BaseModule
     /**
      * @param ConnectionInterface $con
      */
-    public function postActivation(ConnectionInterface $con = null)
+    public function postActivation(ConnectionInterface $con = null): void
     {
         if (!self::getConfigValue('is_initialized', false)) {
             $database = new Database($con);
@@ -61,5 +62,13 @@ class PaymentRecall extends BaseModule
             ;
 
         }
+    }
+
+    public static function configureServices(ServicesConfigurator $servicesConfigurator): void
+    {
+        $servicesConfigurator->load(self::getModuleCode().'\\', __DIR__)
+            ->exclude([THELIA_MODULE_DIR . ucfirst(self::getModuleCode()). "/I18n/*"])
+            ->autowire(true)
+            ->autoconfigure(true);
     }
 }

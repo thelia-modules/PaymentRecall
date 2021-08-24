@@ -3,7 +3,7 @@
         <p>{intl l="Payment recall" d="paymentrecall.ai"}</p>
     </div>
 {if $RECALL_SEND !== true}
-    {form name="paymentrecall.manual.send.recall"}
+    {form name="paymentrecall_manual_send_recall"}
         <form method="POST" action="{url path="/admin/module/paymentrecall/manual/send"}">
 
             {form_hidden_fields form=$form}
