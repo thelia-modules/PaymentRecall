@@ -1,4 +1,4 @@
-{loop type="paymentrecall.order" name="paymentrecall_order" order_id={$ID}}
+{loop type="paymentrecall.order" name="paymentrecall_order" order_id=$ID|default:0}
     <div class="title title-without-tabs clearfix">
         <p>{intl l="Payment recall" d="paymentrecall.ai"}</p>
     </div>

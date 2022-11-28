@@ -8,14 +8,12 @@ How to install
 
 ### Download
 
-#### With composer
+### Composer
 
-Require it by adding the following lines to your `composer.json`
+Add it in your main thelia composer.json file
 
-```json
-"require": {
-    "thelia/payment-recall-module": "1.0"
-}
+```
+composer require thelia/payment-recall-module:~2.0
 ```
 
 #### Manually
