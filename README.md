@@ -1,6 +1,9 @@
 PaymentRecall
 ===============
- 
+
+> This module is no longer maintained and will not be ported to Thelia 3. Its 2.x versions remain available on Packagist.
+> There is no replacement module.
+
 Send a recall mail to order with missed payment.
 
 How to install
